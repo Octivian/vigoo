@@ -27,9 +27,6 @@ object ResolveRules1 {
 
   }
 
-  case class Log(dates: String, logType: String, ip: String, os: String, model: String, browser: String, uv: String, clientSize: String, mediaUuid: String, url: String,
-                 host: String, adInfoUuid: String)
-
   private def computeDatas(lines: RDD[String], rule: DBObject): RDD[(String, String)] = {
     val filtedRdd = lines.filter(filterDatas(_, rule))
     val rdd1 = filtedRdd.map(line => {
@@ -46,6 +43,7 @@ object ResolveRules1 {
     val kpiContent: List[Any] = map.get("kpi_content").get.asInstanceOf[List[Any]]
     val kpiContentArray: List[((Int, String, Int), List[String])] =
       for {kpiContentMap <- kpiContent
+           countType: String = kpiContentMap.asInstanceOf[Map[String, Any]].get("type").get.asInstanceOf[String]
            countConditionColumn: Int = Integer.parseInt(kpiContentMap.asInstanceOf[Map[String, Any]].get("count_condition_column").get.asInstanceOf[String])
            countConditionColumnValue: String = kpiContentMap.asInstanceOf[Map[String, Any]].get("count_condition_column_value").get.asInstanceOf[String]
            distinctColumnIndex: Int = Integer.parseInt(kpiContentMap.asInstanceOf[Map[String, Any]].get("distinct_column").get.asInstanceOf[String])
