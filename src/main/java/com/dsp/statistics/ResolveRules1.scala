@@ -7,7 +7,7 @@ import org.apache.spark.{SparkContext, SparkConf}
 import scala.util.parsing.json.JSON
 
 /**
- * Created by tianpo on 2015/8/19.
+ * Created by lixiang on 2015/8/19.
  */
 object ResolveRules1 {
 
