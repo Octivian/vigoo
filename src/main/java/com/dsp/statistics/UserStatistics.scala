@@ -17,6 +17,7 @@ object UserStatistics {
       System.exit(1)
     }
 
+
     case class User(dates: String, logType: String, ip: String, ua: String, uv: String, clientSize: String, mediaUuid: String, url: String,
                     host: String, adInfoUuid: String)
 

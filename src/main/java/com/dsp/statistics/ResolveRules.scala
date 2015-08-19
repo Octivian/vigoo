@@ -58,7 +58,6 @@ object ResolveRules {
 
 
 
-
     val seqOp = (kpis: List[((Int, String, Int), List[String])], kpi: List[String]) =>  {
       val totalKpi: List[((Int, String, Int), List[String])] =
         for {
@@ -96,11 +95,6 @@ object ResolveRules {
     val filterColumnIndex = Integer.parseInt(rule.get("filter_column").toString)
     val filterColumnValues = rule.get("filter_column_value").toString.split(",")
     val filterColumn = lines.split("\t")(filterColumnIndex)
-    for (filterColumnValue <- filterColumnValues) {
-      if (filterColumnValue.equals(filterColumn)) {
-        return true
-      }
-    }
-    return false
+    filterColumnValues.contains(filterColumn)
   }
 }
