@@ -35,6 +35,8 @@ object ResolveRules1 {
     resolveRule(rdd1, rule)
   }
 
+
+
   private def resolveRule(lines: RDD[List[String]], rule: DBObject): RDD[(String, String)] = {
     val groupColumnIndex = Integer.parseInt(rule.get("group_columns").toString)
 
