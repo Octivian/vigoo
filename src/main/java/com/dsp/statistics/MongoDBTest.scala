@@ -11,7 +11,7 @@ object MongoDBTest {
 
 
   def getMongoDBRules () : MongoCursor ={
-    val mongoClient = MongoClient("192.168.100.28", 27017)
+    val mongoClient = MongoClient("123.57.255.204", 27017)
     val db = mongoClient("dsp_info")
     val rulesCollection = db("JY_statistics_rules")
     rulesCollection.find()
