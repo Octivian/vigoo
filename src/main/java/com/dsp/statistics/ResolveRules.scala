@@ -12,7 +12,11 @@ import scala.util.parsing.json.JSON
 
 object ResolveRules {
 
+
+
+
   def main(args: Array[String]) {
+
     val conf = new SparkConf()
 
     val sc = new SparkContext(conf)
@@ -51,25 +55,13 @@ object ResolveRules {
            countConditionColumnValue: String = kpiContentMap.asInstanceOf[Map[String, Any]].get("count_condition_column_value").get.asInstanceOf[String]
            distinctColumnIndex: Int = Integer.parseInt(kpiContentMap.asInstanceOf[Map[String, Any]].get("distinct_column").get.asInstanceOf[String])
       } yield {
-        ((countConditionColumn, countConditionColumnValue, distinctColumnIndex), List[String](""))
+        ((countConditionColumn, countConditionColumnValue, distinctColumnIndex), List[String]())
       }
 
     val rdd2 = lines.map[(String,List[String])](r => ((r(groupColumnIndex)), r))
 
 
 
-    val seqOp = (kpis: List[((Int, String, Int), List[String])], kpi: List[String]) =>  {
-      val totalKpi: List[((Int, String, Int), List[String])] =
-        for {
-          a <- kpis
-        } yield {
-          if (a._1._2.contains(kpi(a._1._1))) {
-            kpi(a._1._3) :: a._2
-          }
-          a
-        }
-      totalKpi
-    }
 
     val combOp = (aKpis: List[((Int, String, Int), List[String])], bKpis: List[((Int, String, Int), List[String])]) => {
       val totalKpi: List[((Int, String, Int), List[String])] =
@@ -82,12 +74,46 @@ object ResolveRules {
       totalKpi
     }
 
-    rdd2.aggregateByKey(kpiContentArray)(seqOp, combOp).map[(String, String)](kpis => {
-      /*val totalKpi =
+    rdd2.aggregateByKey(kpiContentArray)(
+      (kpis: List[((Int, String, Int), List[String])], kpi: List[String]) => {
+        for{
+          kpiContent<-kpis
+        }yield {
+          if(kpiContent._1._2.contains(kpi(kpiContent._1._1))){
+            if(kpiContent._2.length<1){
+              ((kpiContent._1),List(kpi(kpiContent._1._3)))
+            }else{
+              ((kpiContent._1),kpi(kpiContent._1._3)::kpiContent._2)
+            }
+          }else{
+            kpiContent
+          }
+        }
+      },
+      (kpis1: List[((Int, String, Int), List[String])],kpis2: List[((Int, String, Int), List[String])]) =>{
+        /*val conf = new SparkConf()
+        conf.setMaster("yarn-cluster")
+        conf.setAppName("combineTest")
+        val sc = new SparkContext(conf)
+         sc.parallelize(kpis1:::kpis2).map(r=>(r._1,r._2)).reduceByKey(_:::_).collect.toList
+        */
+        for{
+          kpi1<-kpis1
+        }yield {
+          val list =
+          for{
+            kpi2<-kpis2
+            if(kpi1._1.equals(kpi2._1))
+          }yield (kpi1._1,kpi1._2:::kpi2._2)
+          list(0)
+        }
+      }
+    ).map[(String, String)](kpis => {
+      val totalKpi =
         for {
           kpi <- kpis._2
-        } yield kpi._2.distinct.length*/
-      (kpis._1, kpis._2.toString())
+        } yield kpi._2.distinct.length
+      (kpis._1, totalKpi.toString)
     })
   }
 

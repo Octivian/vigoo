@@ -21,7 +21,7 @@ object ResolveRules1 {
     val rules = MongoDBTest.getMongoDBRules()
 
     rules.foreach(rule => {
-      computeDatas(lines, _).saveAsTextFile(args(1) + rule.get("biz_code").toString)
+      computeDatas(lines, _: DBObject).saveAsTextFile(args(1) + rule.get("biz_code").toString)
     })
 
 
@@ -56,22 +56,20 @@ object ResolveRules1 {
     val rdd2 = lines.map[(String, List[String])](r => (r(groupColumnIndex), r))
 
     rdd2.combineByKey[List[((Int, String, Int), List[String])]](
-      (v) => {
+      (v :List[String]) => {
         val kpiContentArray_ = kpiContentArray
         for {
           kpi <- kpiContentArray_
           if kpi._1._2.contains(v(kpi._1._1))
         } yield ((kpi._1._1, kpi._1._2, kpi._1._3), List(v(kpi._1._3)))
       },
-      (c: List[((Int, String, Int), List[String])], v) => {
+      (c: List[((Int, String, Int), List[String])], v: List[String]) => {
         for {
           column <- c
+          if column._1._2.contains(v(column._1._1))
         } yield {
-          if (column._1._2.contains(v(column._1._1))) {
-            ((column._1._1, column._1._2, column._1._3), v(column._1._3) :: column._2)
-          } else {
-            column
-          }
+          ((column._1._1, column._1._2, column._1._3), v(column._1._3) :: column._2)
+
         }
       },
       (c1: List[((Int, String, Int), List[String])], c2: List[((Int, String, Int), List[String])]) => {
