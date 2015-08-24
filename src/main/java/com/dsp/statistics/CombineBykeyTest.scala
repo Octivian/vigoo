@@ -6,7 +6,7 @@ package com.dsp.statistics
 
 import org.apache.spark.{SparkContext, SparkConf}
 
-object CountDistincTest {
+object CombineBykeyTest {
   def main(args: Array[String]) {
 
     val conf = new SparkConf()

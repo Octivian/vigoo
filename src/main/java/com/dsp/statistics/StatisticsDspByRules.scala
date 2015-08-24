@@ -9,7 +9,7 @@ import scala.util.parsing.json.JSON
 /**
  * Created by lixiang on 2015/8/19.
  */
-object ResolveRules1 {
+object StatisticsDspByRules {
 
   def main(args: Array[String]) {
     val conf = new SparkConf()
@@ -21,7 +21,7 @@ object ResolveRules1 {
     val rules = MongoDBTest.getMongoDBRules()
 
     rules.foreach(rule => {
-      computeDatas(lines, _: DBObject).saveAsTextFile(args(1) + rule.get("biz_code").toString)
+      computeDatas(lines, rule).saveAsTextFile(args(1))
     })
 
 
@@ -38,8 +38,8 @@ object ResolveRules1 {
 
 
   private def resolveRule(lines: RDD[List[String]], rule: DBObject): RDD[(String, String)] = {
-    val groupColumnIndex = Integer.parseInt(rule.get("group_columns").toString)
 
+    val groupColumnIndex = Integer.parseInt(rule.get("group_columns").toString)
     val json: Option[Any] = JSON.parseFull(rule.toString)
     val map: Map[String, Any] = json.get.asInstanceOf[Map[String, Any]]
     val kpiContent: List[Any] = map.get("kpi_content").get.asInstanceOf[List[Any]]
@@ -50,7 +50,7 @@ object ResolveRules1 {
            countConditionColumnValue: String = kpiContentMap.asInstanceOf[Map[String, Any]].get("count_condition_column_value").get.asInstanceOf[String]
            distinctColumnIndex: Int = Integer.parseInt(kpiContentMap.asInstanceOf[Map[String, Any]].get("distinct_column").get.asInstanceOf[String])
       } yield {
-        ((countConditionColumn, countConditionColumnValue, distinctColumnIndex), List[String](""))
+        ((countConditionColumn, countConditionColumnValue, distinctColumnIndex), List[String]())
       }
 
     val rdd2 = lines.map[(String, List[String])](r => (r(groupColumnIndex), r))
@@ -60,16 +60,24 @@ object ResolveRules1 {
         val kpiContentArray_ = kpiContentArray
         for {
           kpi <- kpiContentArray_
-          if kpi._1._2.contains(v(kpi._1._1))
-        } yield ((kpi._1._1, kpi._1._2, kpi._1._3), List(v(kpi._1._3)))
+        } yield {
+          if (kpi._1._2.contains(v(kpi._1._1))){
+            ((kpi._1._1, kpi._1._2, kpi._1._3), List(v(kpi._1._3)))
+          }else{
+            kpi
+          }
+        }
       },
       (c: List[((Int, String, Int), List[String])], v: List[String]) => {
         for {
           column <- c
-          if column._1._2.contains(v(column._1._1))
-        } yield {
-          ((column._1._1, column._1._2, column._1._3), v(column._1._3) :: column._2)
 
+        } yield {
+          if (column._1._2.contains(v(column._1._1))){
+            ((column._1._1, column._1._2, column._1._3), v(column._1._3) :: column._2)
+          }else {
+            column
+          }
         }
       },
       (c1: List[((Int, String, Int), List[String])], c2: List[((Int, String, Int), List[String])]) => {
