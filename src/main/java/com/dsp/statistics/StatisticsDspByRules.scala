@@ -21,7 +21,7 @@ object StatisticsDspByRules {
     val rules = MongoDBTest.getMongoDBRules()
 
     rules.foreach(rule => {
-      computeDatas(lines, rule).saveAsTextFile(args(1))
+      computeDatas(lines, rule).saveAsTextFile(args(1)+rule.get("biz_code").toString)
     })
 
 
@@ -39,48 +39,64 @@ object StatisticsDspByRules {
 
   private def resolveRule(lines: RDD[List[String]], rule: DBObject): RDD[(String, String)] = {
 
-    val groupColumnIndex = Integer.parseInt(rule.get("group_columns").toString)
+    val stringToInt = (string: String) =>{if (string.isEmpty) 0 else Integer.parseInt(string)}
+
+    val groupColumnIndexs = rule.get("group_columns").toString.split(",").foreach(Integer.parseInt)
     val json: Option[Any] = JSON.parseFull(rule.toString)
     val map: Map[String, Any] = json.get.asInstanceOf[Map[String, Any]]
     val kpiContent: List[Any] = map.get("kpi_content").get.asInstanceOf[List[Any]]
-    val kpiContentArray: List[((Int, String, Int), List[String])] =
+    val kpiContentArray: List[((String,Int, String, Int), List[String])] =
       for {kpiContentMap <- kpiContent
            countType: String = kpiContentMap.asInstanceOf[Map[String, Any]].get("type").get.asInstanceOf[String]
-           countConditionColumn: Int = Integer.parseInt(kpiContentMap.asInstanceOf[Map[String, Any]].get("count_condition_column").get.asInstanceOf[String])
            countConditionColumnValue: String = kpiContentMap.asInstanceOf[Map[String, Any]].get("count_condition_column_value").get.asInstanceOf[String]
-           distinctColumnIndex: Int = Integer.parseInt(kpiContentMap.asInstanceOf[Map[String, Any]].get("distinct_column").get.asInstanceOf[String])
+           countConditionColumn: Int = stringToInt(kpiContentMap.asInstanceOf[Map[String, Any]].get("count_condition_column").get.asInstanceOf[String])
+           distinctColumnIndex: Int = stringToInt(kpiContentMap.asInstanceOf[Map[String, Any]].get("distinct_column").get.asInstanceOf[String])
       } yield {
-        ((countConditionColumn, countConditionColumnValue, distinctColumnIndex), List[String]())
+        ((countType,countConditionColumn, countConditionColumnValue, distinctColumnIndex), List[String]())
       }
 
-    val rdd2 = lines.map[(String, List[String])](r => (r(groupColumnIndex), r))
+    val rdd2 = lines.map[(String, List[String])](r => {
+      val key: List[String]=
+      for{
+        groupColumnIndex<-groupColumnIndexs
+      }yield r(groupColumnIndex)
 
-    rdd2.combineByKey[List[((Int, String, Int), List[String])]](
+      (key.toString, r)
+    })
+
+    rdd2.combineByKey[List[((String,Int, String, Int), List[String])]](
       (v :List[String]) => {
         val kpiContentArray_ = kpiContentArray
         for {
           kpi <- kpiContentArray_
         } yield {
-          if (kpi._1._2.contains(v(kpi._1._1))){
-            ((kpi._1._1, kpi._1._2, kpi._1._3), List(v(kpi._1._3)))
+          if(kpi._1._3.isEmpty){
+            (kpi._1, List(v(kpi._1._4)))
           }else{
-            kpi
+            if (kpi._1._3.contains(v(kpi._1._2))){
+              (kpi._1, List(v(kpi._1._4)))
+            }else{
+              kpi
+            }
           }
         }
       },
-      (c: List[((Int, String, Int), List[String])], v: List[String]) => {
+      (c: List[((String,Int, String, Int), List[String])], v: List[String]) => {
         for {
           column <- c
-
         } yield {
-          if (column._1._2.contains(v(column._1._1))){
-            ((column._1._1, column._1._2, column._1._3), v(column._1._3) :: column._2)
-          }else {
-            column
+          if(column._1._3.isEmpty){
+            (column._1, v(column._1._4) :: column._2)
+          }else{
+            if (column._1._3.contains(v(column._1._2))){
+              (column._1, v(column._1._4) :: column._2)
+            }else {
+              column
+            }
           }
         }
       },
-      (c1: List[((Int, String, Int), List[String])], c2: List[((Int, String, Int), List[String])]) => {
+      (c1: List[((String,Int, String, Int), List[String])], c2: List[((String,Int, String, Int), List[String])]) => {
         for {
           column1 <- c1
           column2 <- c2
@@ -92,7 +108,10 @@ object StatisticsDspByRules {
       val kpis =
         for {
           kpi <- kv._2
-        } yield kpi._2.distinct.length
+        } yield kpi._1._1 match{
+          case "count_distinct" =>{kpi._2.distinct.length}
+          case "count" =>{kpi._2.length}
+        }
       (kv._1, kpis.toString())
     })
   }
