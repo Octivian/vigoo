@@ -18,16 +18,16 @@ object MongoDBTest {
   }
 
   def main (args: Array[String]) {
-    val mongoClient = MongoClient("192.168.100.28", 27017)
+    val mongoClient = MongoClient("123.57.255.204", 27017)
     val db = mongoClient("dsp_info")
-    val rulesCollection = db("9yu_statistics_rules")
+    val rulesCollection = db("JY_statistics_rules")
     val json:Option[Any] = JSON.parseFull(rulesCollection.find().next().toString)
     val map:Map[String,Any] = json.get.asInstanceOf[Map[String, Any]]
-    val languages:List[Any] = map.get("kpi_content").get.asInstanceOf[List[Any]]
+    val languages:List[Any] = map.get("kpiContent").get.asInstanceOf[List[Any]]
     val distinctColumn =
     for{
       langMap<-languages
-       distinctColumns:String = langMap.asInstanceOf[Map[String,Any]].get("distinct_column").get.asInstanceOf[String]
+       distinctColumns:String = langMap.asInstanceOf[Map[String,Any]].get("distinctColumn").get.asInstanceOf[String]
     }yield {
       distinctColumns
     }
