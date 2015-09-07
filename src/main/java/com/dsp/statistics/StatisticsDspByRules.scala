@@ -97,7 +97,7 @@ object StatisticsDspByRules {
       for {
         kpi <- resolvedRule._3
       } yield {
-        if(kpi._1._3.isEmpty) (kpi._1, List(v(kpi._1._4))) else{
+        if(kpi._1._3.trim.isEmpty) (kpi._1, List(v(kpi._1._4))) else{
           if (kpi._1._3.contains(v(kpi._1._2))){
             if(kpi._1._4 == -1) (kpi._1, List("")) else (kpi._1, List(v(kpi._1._4)))
           }else kpi
@@ -110,7 +110,7 @@ object StatisticsDspByRules {
       for {
         column <- c
       } yield {
-        if(column._1._3.isEmpty) (column._1, v(column._1._4) :: column._2) else{
+        if(column._1._3.trim.isEmpty) (column._1, v(column._1._4) :: column._2) else{
           if (column._1._3.contains(v(column._1._2))){
             if(column._1._4 == -1) (column._1, "" :: column._2) else (column._1, v(column._1._4) :: column._2)
           }else column
