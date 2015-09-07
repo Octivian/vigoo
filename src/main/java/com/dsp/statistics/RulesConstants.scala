@@ -12,6 +12,21 @@ object RulesConstants {
   val BIZ_CODE = "bizCode"
 
   /**
+   * 汇总周期
+   */
+  val SUMMARY_PERIOD = "summaryPeriod"
+
+  /**
+   * 汇总周期-天
+   */
+  val SUMMARY_PERIOD_DAY = "day"
+
+  /**
+   * 汇总周期-小时
+   */
+  val SUMMARY_PERIOD_HOUR = "hour"
+
+  /**
    * 过滤列字段下标
    */
   val FILTER_COLUMNS_INDEXES = "filterColumnsIndexes"

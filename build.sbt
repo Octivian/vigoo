@@ -12,6 +12,8 @@ libraryDependencies <<= scalaVersion {
   scala_version => Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion,
 
+    "org.apache.spark" %% "spark-streaming" % sparkVersion,
+
     "org.mongodb" %% "casbah" % "2.7.3",
 
     "org.scalaj" %% "scalaj-collection" % "1.6",
